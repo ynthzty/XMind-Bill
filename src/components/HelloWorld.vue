@@ -9,7 +9,6 @@
               class="upload-demo"
               ref="upload"
               action="https://jsonplaceholder.typicode.com/posts/"
-              :file-list="fileList"
               :on-change="handleChange"
               accept=".csv"
             >
@@ -21,7 +20,7 @@
               class="upload-demo"
               ref="upload"
               action="https://jsonplaceholder.typicode.com/posts/"
-              :file-list="annexList"
+        
               :on-change="handleAnnexChange"
               accept=".csv"
             >
@@ -52,7 +51,7 @@
 
                 <el-form-item label="账单时间" :label-width="formLabelWidth">
                   <el-date-picker
-                    v-model="form.value3"
+                    v-model="form.time"
                     type="datetime"
                     placeholder="选择日期时间"
                     default-time="12:00:00">
@@ -60,22 +59,31 @@
                 </el-form-item>
 
                 <el-form-item label="账单类型" :label-width="formLabelWidth">
-                  <el-select v-model="form.region" placeholder="账单类型">
-                    <el-option label="一" value="5il79e11628"></el-option>
-                    <el-option label="二" value="5il79e11628"></el-option>
+                  <el-select v-model="form.category" placeholder="账单类型">
+                    <el-option v-for="item in categoryOptions"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"></el-option>
                   </el-select>
                 </el-form-item>
 
                 <el-form-item label="账单金额" :label-width="formLabelWidth">
-                  <el-input v-model="form.name" autocomplete="off"></el-input>
+                  <el-input v-model="form.amount" 
+                  autocomplete="off"
+                  oninput="value=value.replace(/[^0-9.]/g,'')" maxLength='6'
+                  ></el-input>
                 </el-form-item>
               </el-form>
               <div slot="footer" class="dialog-footer">
                 <el-button @click="dialogFormVisible = false">取 消</el-button>
-                <el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+                <el-button type="primary"  @click="addBill">确 定</el-button>
               </div>
             </el-dialog>
           </div>
+          <el-row type="flex" class="statistics" justify="end">
+            <el-col :span="3"><span>总收入：{{incomeTotal}}</span></el-col>
+            <el-col :span="3"><span>总支出：{{expenditureTotal}}</span></el-col>
+          </el-row>
 
           <el-table :data="filterTableData" style="width: 100%" height="400">
              <el-table-column
@@ -104,7 +112,7 @@
             >
             <template slot-scope="scope">
        
-        <span >{{ scope.row.category|categoryLoader(that) }}</span>
+        <span >{{ scope.row.name ? scope.row.name : scope.row.category }}</span>
       </template>
             </el-table-column>
             <el-table-column
@@ -128,27 +136,24 @@ export default {
   data() {
     return {
       that: this,
-      fileList: [],
       annexList: [],
       titleData: [],
       labelData: ["账单类型", "账单时间", "账单分类", "账单金额"],
       tableData: [],
       filterTableData: [],
       selectOptions: [],
-      selectValue: '',
+      categoryOptions: [],
+      selectValue: "",
       dialogFormVisible: false,
-        form: {
-          name: '',
-          region: '',
-          date1: '',
-          date2: '',
-          delivery: false,
-          type: [],
-          resource: '',
-          desc: '',
-          value3: ''
-        },
-        formLabelWidth: '120px'
+      form: {
+        time: "",
+        type: "",
+        category: "",
+        amount: 0,
+      },
+      formLabelWidth: "120px",
+      incomeTotal: 0, //收入
+      expenditureTotal: 0 //支出
     };
   },
   created() {
@@ -156,83 +161,129 @@ export default {
     let csvResults = sessionStorage.getItem("csvResults");
     let annexResults = sessionStorage.getItem("annexResults");
 
-
     if (csvResults) {
       let file = JSON.parse(csvResults);
       this.handleFile(file);
     }
 
-    if(annexResults){
+    if (annexResults) {
       let file = JSON.parse(annexResults);
       this.handleAnnexFile(file);
     }
   },
-  watch:{
-    selectValue(val){
-      console.log("xuanze："+val)
-      this.filterTableData = this.tableData.filter(item => {
+  computed: {
+    // //收入
+    // income: function () {
+    //   let total = 0;
+    //   for(let i in this.filterData){
+    //     if(i.type == 1){
+    //       total = total + i.amount;
+    //     }
+    //   }
+    //   return 10;
+    // },
+    // //支出
+    // expenditure: function () {
+    //   let total = 0;
+    //   for(let i in this.filterData){
+    //     if(i.type == 0){
+    //       total = total + i.amount;
+    //     }
+    //   }
+    //   return 10;
+    // },
+  },
+  watch: {
+    selectValue(val) {
+      this.filterTableData = this.tableData.filter((item) => {
         return item.month == val;
-      })
+      });
+    },
+
+    filterTableData:function() {
+        let incomeTotal = 0; //收入
+        let expenditureTotal = 0; //支出
+      for(let i of this.filterTableData){
+        console.log("1111");
+        console.log(i);
+        if(i.type == 1){
+          incomeTotal = incomeTotal + Number(i.amount);
+        }else{
+          expenditureTotal = expenditureTotal + Number(i.amount);
+        }
+      }
+      
+      this.incomeTotal = incomeTotal;
+      this.expenditureTotal = expenditureTotal;
     }
   },
   filters: {
-    typeLoader(type){
-      return (type == 1) ? "收入" : "支出";
+    typeLoader(type) {
+      return type == 1 ? "收入" : "支出";
     },
 
-    timeLoader(time){
+    timeLoader(time) {
       //转换时间戳
       let timeStamp = new Date(parseInt(time));
       let Y = timeStamp.getFullYear();
       let M = timeStamp.getMonth() + 1;
-      M = M < 10 ? ('0' + M ): M;
+      M = M < 10 ? "0" + M : M;
       let d = timeStamp.getDate();
-      d = d < 10 ? ('0' + d) : d;
+      d = d < 10 ? "0" + d : d;
       let h = timeStamp.getHours();
-      h = h < 10 ? ('0' + h) : h;
+      h = h < 10 ? "0" + h : h;
       let m = timeStamp.getMinutes();
-      m = m < 10 ? ('0' + m) : m;
+      m = m < 10 ? "0" + m : m;
       let s = timeStamp.getSeconds();
-      s = h < 10 ? ('0' + s) : s;
-      return Y + '-' + M + '-' + d + ' ' + h + ':' + m + ':' + s;
+      s = h < 10 ? "0" + s : s;
+      return Y + "-" + M + "-" + d + " " + h + ":" + m + ":" + s;
     },
 
-    categoryLoader(category,that){
-      if(that.annexList){
-       return that.annexList[category]
-      }else{
-        return category
+    categoryLoader(category, that) {
+      if (that.annexList) {
+        return that.annexList[category];
+      } else {
+        return category;
       }
-    }
+    },
   },
   methods: {
-    filterData(data){
+    addBill() {
+      this.dialogFormVisible = false;
+      let timestamp = new Date(this.form.time).getTime();
+      this.form.time = timestamp;
+      // this.tableData.push(this.form);
+      // this.filterTableData.push(this.form);
+      sessionStorage.setItem("csvResults", JSON.stringify(this.tableData));
+      console.log(this.tableData);
+    },
+    filterData(data) {
       let obj = [];
-      this.tableData.filter(item => {
+      this.tableData.filter((item) => {
         obj.push({
           text: item[data.month],
-          value: item[data.month]
-        })
-      })
+          value: item[data.month],
+        });
+      });
       return obj;
     },
- 
+
     //转换时间戳
-    changeTimeStamp(time){
+    changeTimeStamp(time) {
       let timeStamp = new Date(parseInt(time));
       let Y = timeStamp.getFullYear();
       let M = timeStamp.getMonth() + 1;
-      M = M < 10 ? ('0' + M ): M;
+      M = M < 10 ? "0" + M : M;
       let d = timeStamp.getDate();
-      d = d < 10 ? ('0' + d) : d;
+      d = d < 10 ? "0" + d : d;
       let h = timeStamp.getHours();
-      h = h < 10 ? ('0' + h) : h;
+      h = h < 10 ? "0" + h : h;
       let m = timeStamp.getMinutes();
-      m = m < 10 ? ('0' + m) : m;
+      m = m < 10 ? "0" + m : m;
       let s = timeStamp.getSeconds();
-      s = h < 10 ? ('0' + s) : s;
+      s = h < 10 ? "0" + s : s;
       // console.log(Y);
-      return Y + '-' + M + '-' + d + ' ' + h + ':' + m + ':' + s;
+      return Y + "-" + M + "-" + d + " " + h + ":" + m + ":" + s;
     },
     resetDateFilter() {
       this.$refs.filterTable.clearFilter("date");
@@ -271,9 +322,10 @@ export default {
     },
 
     //附件
-    handleAnnexChange(file){
+    handleAnnexChange(file) {
       //判断上传是否为csv文件
       let _this = this;
+
       const isCSV = file.raw.type === "text/csv";
 
       if (!isCSV) {
@@ -299,56 +351,72 @@ export default {
         let obj = new Object();
 
         for (let j = 0; j < results.data[i].length; j++) {
-          if(titleData[j] == "time"){ 
+          if (titleData[j] == "time") {
             obj[titleData[j]] = results.data[i][j];
             //添加月份字段
             let timeStamp = new Date(parseInt(results.data[i][j]));
             let M = timeStamp.getMonth() + 1;
             obj["month"] = M;
-          }else{
+          } else {
             obj[titleData[j]] = results.data[i][j];
-          }   
+          }
         }
         data.push(obj);
-        
       }
       _this.titleData = titleData;
       _this.tableData = data;
       _this.filterTableData = data;
-      
+
       //选择下拉框
-      this.setSelectOptions(data)
+      this.setSelectOptions(data);
     },
 
     //处理附件
-    handleAnnexFile(results){
+    handleAnnexFile(results) {
       let obj = new Object();
-       for (let i = 1; i < results.data.length; i++) {
+      for (let i = 1; i < results.data.length; i++) {
         let label = results.data[i][0];
         let value = results.data[i][2];
         obj[label] = value;
-       }
-       this.annexList = obj;
+      }
+      this.annexList = obj;
+      this.setCategoryOptions(results.data);
+
+      for (let item of this.tableData) {
+        this.$set(item, "name", obj[item.category]);
+      }
+    },
+
+    //处理账单分类下拉框
+    setCategoryOptions(data) {
+      let categoryOption = [];
+      for (let i = 1; i < data.length; i++) {
+        let obj = new Object();
+        obj["value"] = data[i][0];
+        obj["label"] = data[i][2];
+        categoryOption.push(obj);
+      }
+      this.categoryOptions = categoryOption;
     },
 
     //处理下拉框内容
-    setSelectOptions(data){
+    setSelectOptions(data) {
       let arr = [];
-      for(let i of data){
-        arr.push(i.month)
+      for (let i of data) {
+        arr.push(i.month);
       }
       arr = Array.from(new Set(arr));
-      
+
       let selectOption = [];
-      for(let j of arr){
+      for (let j of arr) {
         let obj = new Object();
         obj["value"] = j;
         obj["label"] = j + "月";
-        selectOption.push(obj)
+        selectOption.push(obj);
       }
 
       this.selectOptions = selectOption;
-    }
+    },
   },
 };
 </script>
@@ -359,10 +427,13 @@ export default {
   margin: 3rem;
   border: 1rem solid #5e9960;
   border-radius: 1rem;
+  .statistics{
+    font-size: 14px;
+  }
   .table-content {
     .table-option {
       display: flex;
-      width: 24rem;
+      width: 32rem;
       justify-content: space-between;
       padding: 1rem;
     }
