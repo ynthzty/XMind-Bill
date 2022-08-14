@@ -93,7 +93,7 @@ export default {
     //上传账单
     uploadBill(file){
       let _this = this;
-      console.log("bill");
+
       if(this.checkFile(file)){
         Papa.parse(file.raw, {
           complete: function (results) {

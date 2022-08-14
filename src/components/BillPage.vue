@@ -6,7 +6,8 @@
       <div class="main-center">
         <div class="table-content">
           <div class="table-option">
-            <el-select v-model="selectValue" placeholder="请选择月份">
+            <div class="table-option-left">
+              <el-select v-model="selectValue" placeholder="请选择月份">
               <el-option
                 v-for="item in selectOptions"
                 :key="item.value"
@@ -16,18 +17,27 @@
               </el-option>
             </el-select>
 
+            <el-button class="add-button" @click="slectAll()"
+              >全部账单</el-button
+            >
             <el-button class="add-button" @click="dialogFormVisible = true"
               >添加账单</el-button
             >
+            </div>
+            <div class="table-option-right">
+              <el-button class="upload-button" @click="toUpload"
+              >重新上传</el-button
+            >
+            </div> 
 
             <el-dialog title="添加账单" class="bill-dialog" :visible.sync="dialogFormVisible">
               <el-form :model="addform" ref="addform" :rules="rules">
                 <el-form-item
-                  label="账单分类"
+                  label="账单类型"
                   :label-width="formLabelWidth"
                   prop="type"
                 >
-                  <el-select v-model="addform.type" placeholder="账单分类">
+                  <el-select v-model="addform.type" placeholder="账单类型">
                     <el-option label="收入" value="1"></el-option>
                     <el-option label="支出" value="0"></el-option>
                   </el-select>
@@ -48,11 +58,11 @@
                 </el-form-item>
 
                 <el-form-item
-                  label="账单类型"
+                  label="账单分类"
                   :label-width="formLabelWidth"
                   prop="category"
                 >
-                  <el-select v-model="addform.category" placeholder="账单类型">
+                  <el-select v-model="addform.category" placeholder="账单分类">
                     <el-option
                       v-for="item in categoryOptions"
                       :key="item.value"
@@ -107,7 +117,10 @@
                 <span>{{ scope.row.time | timeLoader }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="name" :label="labelData[2]">
+            <el-table-column prop="name" :label="labelData[2]"
+            :filters="namefilters"
+            :filter-method="filterHandler"
+            >
               <template slot-scope="scope">
                 <span>{{
                   scope.row.name ? scope.row.name : scope.row.category
@@ -140,6 +153,7 @@ export default {
       incomeTotal: 0, //收入
       expenditureTotal: 0, //支出
       labelData: ["账单类型", "账单时间", "账单分类", "账单金额"], //自定义表头名
+      namefilters:[],//账单分类筛选
 
 
       annexList: [],
@@ -193,14 +207,20 @@ export default {
 
     //整合表格数据
     this.handleBill(billResults);
+
   },
 
   watch: {
     //过滤数据
-    selectValue(val) {
-      this.filterBillData = this.billData.filter((item) => {
+    selectValue(val) { 
+      if(val == ""){
+        this.filterBillData = this.billData
+      }else{
+        this.filterBillData = this.billData.filter((item) => {
         return item.month == val;
       });
+      }
+
     },
     filterBillData() {
         let incomeTotal = 0; //收入
@@ -251,7 +271,25 @@ export default {
       this.categoryLists = obj;
       //处理账单分类下拉框
       this.setCategoryOptions(obj)
+
+      //获取账单分类筛选列表
+      this.handleNamefilters(obj)
     },
+
+    //获取账单分类筛选列表
+    handleNamefilters(categoryObj){
+      let arr = [];
+      for(let i in categoryObj){
+        let obj = new Object();
+        
+        obj["value"] = i;
+        obj["text"] = categoryObj[i];
+        arr.push(obj);
+      }
+
+      this.namefilters = arr;
+    },
+
     //整合账单数据
     handleBill(results) {
       // let _this = this;
@@ -360,6 +398,24 @@ export default {
             return false;
           }
         }) 
+    },
+
+    //全部账单
+    slectAll(){
+      this.selectValue = "";
+    },
+
+    //筛选账单分类
+    filterHandler(value, row, column) {
+        const property = column['property'];
+        return row[property] === this.categoryLists[value]
+    },
+
+    //重新上传
+    toUpload(){
+      this.$router.push({
+          name:"uploadPage"
+      })
     }
   },
 };
@@ -379,12 +435,22 @@ export default {
   .table-content {
     .table-option {
       display: flex;
-      width: 18rem;
       justify-content: space-between;
       padding: 1rem;
+      .table-option-left{
+        display: flex;
+        justify-content: space-between;
+        width: 25rem;
+      }
+      .table-option-right{}
       .add-button{
         background-color: #C09F80;
         border-color: #C09F80;
+        color: #fbecec;
+      }
+      .upload-button{
+        background-color: #062F4F;
+        border-color: #062F4F;
         color: #fbecec;
       }
     }
