@@ -1,6 +1,7 @@
 <template>
   <el-container>
-    <el-main>
+    <el-header class="header-title" type="flex"  justify="center" height="5rem">My Bill</el-header>
+    <el-main class="bill-main">
       <div class="main-top"></div>
       <div class="main-center">
         <div class="table-content">
@@ -15,11 +16,11 @@
               </el-option>
             </el-select>
 
-            <el-button type="primary" @click="dialogFormVisible = true"
+            <el-button class="add-button" @click="dialogFormVisible = true"
               >添加账单</el-button
             >
 
-            <el-dialog title="添加账单" :visible.sync="dialogFormVisible">
+            <el-dialog title="添加账单" class="bill-dialog" :visible.sync="dialogFormVisible">
               <el-form :model="addform" ref="addform" :rules="rules">
                 <el-form-item
                   label="账单分类"
@@ -367,11 +368,13 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
 .main-center {
-  margin: 3rem;
-  border: 1rem solid #5e9960;
+  border: 1rem solid #76323F;
   border-radius: 1rem;
+  background-color: #76323F;
   .statistics {
     font-size: 14px;
+    color: #fff;
+    padding-bottom: 10px;
   }
   .table-content {
     .table-option {
@@ -379,6 +382,11 @@ export default {
       width: 18rem;
       justify-content: space-between;
       padding: 1rem;
+      .add-button{
+        background-color: #C09F80;
+        border-color: #C09F80;
+        color: #fbecec;
+      }
     }
     .el-form-item {
       width: 50%;
@@ -388,8 +396,25 @@ export default {
     height: 2rem;
     background-color: #5e9960;
   }
+
+  
 }
 </style>
 
-<style>
+<style lang="scss">
+  .bill-dialog{
+    .el-dialog__header{
+        background-color: #76323F;
+        .el-dialog__title{
+          color:#fff;
+        }
+    }
+    .el-dialog__footer{
+      .el-button--primary{
+        background-color: #C09F80;
+        border-color: #C09F80;
+        color: #faf9f9;
+      }
+    }
+  } 
 </style>

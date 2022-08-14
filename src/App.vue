@@ -15,5 +15,18 @@
 body {
   padding: 0;
   margin: 0;
+  background-color: #D7CEC7;
+}
+
+.header-title{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 50px;
+    color: #fff;
+}
+
+.bill-main{
+  padding: 0 3rem 3rem !important;
 }
 </style>

@@ -1,6 +1,7 @@
 <template>
   <el-container>
-    <el-main>
+    <el-header class="header-title" type="flex"  justify="center" height="5rem">My Bill</el-header>
+    <el-main class="bill-main">
       <div class="main-top"></div>
       <div class="main-center">
         <div class="steps-main">
@@ -136,9 +137,9 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="scss" scoped>
 .main-center {
-  margin: 3rem;
-  border: 1rem solid #5e9960;
+  border: 1rem solid #76323F;
   border-radius: 1rem;
+  background-color: #fff;
   .statistics{
     font-size: 14px;
   }
@@ -150,6 +151,18 @@ export default {
     justify-content: center;
     align-items: center;
     height: 13rem;
+  }
+}
+</style>
+<style lang="scss">
+.step-content{
+  .el-button--primary{
+    background-color: #C09F80;
+    border-color: #C09F80;
+    color: #faf9f9;
+    width: 14rem;
+    height: 4rem;
+    font-size: 20px;
   }
 }
 </style>
