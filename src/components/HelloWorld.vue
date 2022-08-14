@@ -41,25 +41,25 @@
             <el-button type="primary" @click="dialogFormVisible = true">添加账单</el-button>
 
             <el-dialog title="添加账单" :visible.sync="dialogFormVisible">
-              <el-form :model="form">
-                <el-form-item label="账单分类" :label-width="formLabelWidth">
-                  <el-select v-model="form.type" placeholder="账单分类">
+              <el-form :model="addform" ref="addform" :rules="rules">
+                <el-form-item label="账单分类" :label-width="formLabelWidth" prop="type">
+                  <el-select v-model="addform.type" placeholder="账单分类">
                     <el-option label = "收入" value = 1></el-option>
                     <el-option label = "支出" value = 0></el-option>
                   </el-select>
                 </el-form-item>
 
-                <el-form-item label="账单时间" :label-width="formLabelWidth">
+                <el-form-item label="账单时间" :label-width="formLabelWidth" prop="time">
                   <el-date-picker
-                    v-model="form.time"
+                    v-model="addform.time"
                     type="datetime"
                     placeholder="选择日期时间"
                     default-time="12:00:00">
                   </el-date-picker>
                 </el-form-item>
 
-                <el-form-item label="账单类型" :label-width="formLabelWidth">
-                  <el-select v-model="form.category" placeholder="账单类型">
+                <el-form-item label="账单类型" :label-width="formLabelWidth" prop="category">
+                  <el-select v-model="addform.category" placeholder="账单类型">
                     <el-option v-for="item in categoryOptions"
                       :key="item.value"
                       :label="item.label"
@@ -67,8 +67,8 @@
                   </el-select>
                 </el-form-item>
 
-                <el-form-item label="账单金额" :label-width="formLabelWidth">
-                  <el-input v-model="form.amount" 
+                <el-form-item label="账单金额" :label-width="formLabelWidth" prop="amount">
+                  <el-input v-model="addform.amount" 
                   autocomplete="off"
                   oninput="value=value.replace(/[^0-9.]/g,'')" maxLength='6'
                   ></el-input>
@@ -76,7 +76,7 @@
               </el-form>
               <div slot="footer" class="dialog-footer">
                 <el-button @click="dialogFormVisible = false">取 消</el-button>
-                <el-button type="primary"  @click="addBill">确 定</el-button>
+                <el-button type="primary"  @click="addBill('addform')">确 定</el-button>
               </div>
             </el-dialog>
           </div>
@@ -145,18 +145,35 @@ export default {
       categoryOptions: [],
       selectValue: "",
       dialogFormVisible: false,
-      form: {
+      addform: {
         time: "",
         type: "",
         category: "",
         amount: 0,
       },
       formLabelWidth: "120px",
+      rules: {
+        type: [
+            { required: true, message: '请选择账单类型', trigger: 'change' },
+        ],
+        time: [
+            { type: 'date', required: true, message: '请选择日期', trigger: 'change' }
+        ],
+        category: [
+            { required: true, message: '请选择账单分类', trigger: 'change' },
+        ],
+        amount: [
+            { required: true, message: '请输入金额', trigger: 'blur' },
+        ],
+      },
       incomeTotal: 0, //收入
       expenditureTotal: 0 //支出
     };
   },
   created() {
+    console.log("打印props");
+    
+    console.log(sessionStorage.getItem("attachResults"));
     //从session中获取初始值
     let csvResults = sessionStorage.getItem("csvResults");
     let annexResults = sessionStorage.getItem("annexResults");
@@ -171,28 +188,7 @@ export default {
       this.handleAnnexFile(file);
     }
   },
-  computed: {
-    // //收入
-    // income: function () {
-    //   let total = 0;
-    //   for(let i in this.filterData){
-    //     if(i.type == 1){
-    //       total = total + i.amount;
-    //     }
-    //   }
-    //   return 10;
-    // },
-    // //支出
-    // expenditure: function () {
-    //   let total = 0;
-    //   for(let i in this.filterData){
-    //     if(i.type == 0){
-    //       total = total + i.amount;
-    //     }
-    //   }
-    //   return 10;
-    // },
-  },
+
   watch: {
     selectValue(val) {
       this.filterTableData = this.tableData.filter((item) => {
@@ -204,8 +200,6 @@ export default {
         let incomeTotal = 0; //收入
         let expenditureTotal = 0; //支出
       for(let i of this.filterTableData){
-        console.log("1111");
-        console.log(i);
         if(i.type == 1){
           incomeTotal = incomeTotal + Number(i.amount);
         }else{
@@ -235,7 +229,7 @@ export default {
       let m = timeStamp.getMinutes();
       m = m < 10 ? "0" + m : m;
       let s = timeStamp.getSeconds();
-      s = h < 10 ? "0" + s : s;
+      s = s < 10 ? "0" + s : s;
       return Y + "-" + M + "-" + d + " " + h + ":" + m + ":" + s;
     },
 
@@ -248,14 +242,48 @@ export default {
     },
   },
   methods: {
-    addBill() {
-      this.dialogFormVisible = false;
-      let timestamp = new Date(this.form.time).getTime();
-      this.form.time = timestamp;
-      // this.tableData.push(this.form);
-      // this.filterTableData.push(this.form);
-      sessionStorage.setItem("csvResults", JSON.stringify(this.tableData));
-      console.log(this.tableData);
+    addBill(formName) {
+      this.$refs[formName].validate((valid) => {
+          if (valid) {
+            this.dialogFormVisible = false;
+            let timestamp = new Date(this.addform.time).getTime();
+            this.addform.time = timestamp;
+
+            //深拷贝
+            let obj = {
+              time: new Date(this.addform.time).getTime(),
+              type: this.addform.type,
+              category: this.addform.category,
+              amount: this.addform.amount,
+              month: new Date(this.addform.time).getMonth(),
+              name: this.addName()
+            };
+
+            console.log('this obj')
+            console.log(obj);
+            // sessionStorage.setItem("csvResults", JSON.stringify(this.tableData));
+            this.tableData.push(obj);
+            this.filterTableData.push(obj);
+ 
+            this.$message({
+              message: '已添加一条账单',
+              type: 'success'
+            });
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+        
+    },
+    //账单分类转换
+    addName(){
+      for(let i of this.categoryOptions){
+        if(i.value == this.addform.category){
+          return i.label;
+        }
+        console.log(i);
+      }
     },
     filterData(data) {
       let obj = [];
