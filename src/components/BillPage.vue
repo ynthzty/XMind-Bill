@@ -17,7 +17,7 @@
               </el-option>
             </el-select>
 
-            <el-button class="add-button" @click="slectAll()"
+            <el-button class="add-button" @click="selectAll()"
               >全部账单</el-button
             >
             <el-button class="add-button" @click="dialogFormVisible = true"
@@ -103,7 +103,10 @@
           </el-row>
 
           <el-table :data="filterBillData" style="width: 100%" height="400">
-            <el-table-column prop="type" :label="labelData[0]">
+            <el-table-column prop="type" :label="labelData[0]"
+            :filters="[{text:'收入',value:'1'},{text:'支出',value:'0'}]"
+            :filter-method="filterTypeHandler"
+            >
               <template slot-scope="scope">
                 <span>{{ scope.row.type | typeLoader }}</span>
               </template>
@@ -119,7 +122,7 @@
             </el-table-column>
             <el-table-column prop="name" :label="labelData[2]"
             :filters="namefilters"
-            :filter-method="filterHandler"
+            :filter-method="filterCategoryHandler"
             >
               <template slot-scope="scope">
                 <span>{{
@@ -127,7 +130,7 @@
                 }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="amount" :label="labelData[3]">
+            <el-table-column prop="amount" :label="labelData[3]" sortable>
             </el-table-column>
           </el-table>
         </div>
@@ -154,6 +157,7 @@ export default {
       expenditureTotal: 0, //支出
       labelData: ["账单类型", "账单时间", "账单分类", "账单金额"], //自定义表头名
       namefilters:[],//账单分类筛选
+      typefilters:[],//账单类型筛选
 
 
       annexList: [],
@@ -213,14 +217,16 @@ export default {
   watch: {
     //过滤数据
     selectValue(val) { 
-      if(val == ""){
+      console.log("选择");
+      console.log(val);
+      if(val == undefined){
         this.filterBillData = this.billData
       }else{
-        this.filterBillData = this.billData.filter((item) => {
-        return item.month == val;
-      });
+         this.filterBillData = this.billData.filter((item) => {
+            return item.month == val;
+          });
       }
-
+       
     },
     filterBillData() {
         let incomeTotal = 0; //收入
@@ -310,7 +316,9 @@ export default {
             //添加账单分类名称
             let label = results[i][j];
             obj["name"] = this.categoryLists[label];
-          } else {
+          } else if(titleData[j] == "amount"){
+            obj[titleData[j]] = Number(results[i][j]);
+          } else{
             obj[titleData[j]] = results[i][j];
           }
         }
@@ -401,14 +409,21 @@ export default {
     },
 
     //全部账单
-    slectAll(){
-      this.selectValue = "";
+    selectAll(){
+      this.selectValue = undefined;
+      //this.filterBillData = this.billData
     },
 
     //筛选账单分类
-    filterHandler(value, row, column) {
+    filterCategoryHandler(value, row, column) {
         const property = column['property'];
         return row[property] === this.categoryLists[value]
+    },
+
+    //筛选账单类型
+    filterTypeHandler(value, row, column){
+      const property = column['property'];
+      return row[property] === value;
     },
 
     //重新上传
