@@ -93,11 +93,14 @@
               </div>
             </el-dialog>
           </div>
-          <el-row type="flex" class="statistics" justify="end">
-            <el-col :span="3"
+
+          <div class="bill-content">
+            <div class="content-left">
+            <el-row type="flex" class="statistics" justify="end">
+            <el-col :span="5"
               ><span>总收入：{{ incomeTotal }}</span></el-col
             >
-            <el-col :span="3"
+            <el-col :span="5"
               ><span>总支出：{{ expenditureTotal }}</span></el-col
             >
           </el-row>
@@ -133,16 +136,29 @@
             <el-table-column prop="amount" :label="labelData[3]" sortable>
             </el-table-column>
           </el-table>
+          </div>
+          <div class="content-right">
+            <div class="chart-content">
+              <billEchart :selectValue="selectValue" :filterBillData="filterBillData?filterBillData:billData"></billEchart>
+            </div>
+          </div>
+
+          </div>
+          
         </div>
+        
       </div>
     </el-main>
   </el-container>
 </template>
 
 <script>
+import billEchart from "./BillEchart.vue"
 export default {
   name: "BillPage",
-  components: {},
+  components: {
+    billEchart
+  },
 
   data() {
     return {
@@ -216,17 +232,18 @@ export default {
 
   watch: {
     //过滤数据
-    selectValue(val) { 
-      console.log("选择");
-      console.log(val);
-      if(val == undefined){
+    selectValue: { 
+      handler(val){
+      if(val == undefined  || val == ""){
         this.filterBillData = this.billData
       }else{
          this.filterBillData = this.billData.filter((item) => {
             return item.month == val;
           });
       }
-       
+      },
+      immediate:true 
+      
     },
     filterBillData() {
         let incomeTotal = 0; //收入
@@ -317,7 +334,7 @@ export default {
             let label = results[i][j];
             obj["name"] = this.categoryLists[label];
           } else if(titleData[j] == "amount"){
-            obj[titleData[j]] = Number(results[i][j]);
+            obj[titleData[j]] = Math.abs(Number(results[i][j]));
           } else{
             obj[titleData[j]] = results[i][j];
           }
@@ -442,6 +459,10 @@ export default {
   border: 1rem solid #76323F;
   border-radius: 1rem;
   background-color: #76323F;
+ 
+  .chart-content{
+    width:50%;
+  };
   .statistics {
     font-size: 14px;
     color: #fff;
@@ -457,7 +478,9 @@ export default {
         justify-content: space-between;
         width: 25rem;
       }
-      .table-option-right{}
+      .table-option-right{
+        
+      }
       .add-button{
         background-color: #C09F80;
         border-color: #C09F80;
@@ -471,6 +494,17 @@ export default {
     }
     .el-form-item {
       width: 50%;
+    }
+
+    .bill-content{
+      display: flex;
+      .content-left,.content-right{
+        width: 50%;
+      }
+      .content-right{
+        padding-left: 3rem;
+        padding-top: 2rem;
+      }
     }
   }
   .table-title {

@@ -5,14 +5,14 @@ Vue.use(VueRouter)
 
 const routes = [
   {
-    path: '/',
+    path: '/uploadPage',
     name: 'uploadPage',
     component: () => import('../components/UploadPage.vue')
   },
   {
-    path: '/helloWorld',
-    name: 'helloWorld',
-    component: () => import('../components/HelloWorld.vue')
+    path: '/',
+    name: 'billEchart',
+    component: () => import('../components/BillEchart.vue')
   },
   {
     path: '/billPage',
