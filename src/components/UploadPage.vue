@@ -111,7 +111,6 @@ export default {
     //上传附件
     uploadAttachments(file){
       let _this = this;
-      console.log("attach");
        if(this.checkFile(file)){
         Papa.parse(file.raw, {
           complete: function (results) {
